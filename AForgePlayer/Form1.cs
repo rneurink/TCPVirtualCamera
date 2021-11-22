@@ -5,20 +5,22 @@ using System.Data;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Windows.Forms;
 
 using AForge.Video;
 using AForge.Video.DirectShow;
 
-namespace Viewer
+namespace AForgePlayer
 {
     public partial class Form1 : Form
     {
         private Stopwatch stopWatch = null;
-        private Timer timer = new Timer() {Interval =  1000};
+        private System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer() {Interval =  1000};
         private IVideoSource mySource;
+        private bool requestedStop = false;
 
         public Form1()
         {
@@ -71,16 +73,24 @@ namespace Viewer
 
         private void VideoSourceOnNewFrame(object sender, NewFrameEventArgs eventargs)
         {
+            if (requestedStop) return;
             Bitmap bmp = new Bitmap(eventargs.Frame);
-            pictureBox1.Invoke(new Action(() =>
+            try
             {
-                using (pictureBox1.Image)
+                pictureBox1?.Invoke(new Action(() =>
                 {
-                    Image old = pictureBox1.Image;
-                    pictureBox1.Image = bmp;
-                    old?.Dispose();
-                }
-            }));
+                    using (pictureBox1.Image)
+                    {
+                        Image old = pictureBox1.Image;
+                        pictureBox1.Image = bmp;
+                        old?.Dispose();
+                    }
+                }));
+            }
+            catch (Exception e)
+            {
+                Debug.WriteLine(e);
+            }
         }
 
         // Open video source
@@ -102,8 +112,6 @@ namespace Viewer
 
             // start timer
             timer.Start();
-
-            this.Cursor = Cursors.Default;
         }
 
         // Close video source if it is running
@@ -111,10 +119,13 @@ namespace Viewer
         {
             if (mySource != null)
             {
+                requestedStop = true;
+                //System.Threading.Thread.Sleep(50);
+                mySource.NewFrame -= VideoSourceOnNewFrame;
                 mySource.SignalToStop();
 
                 // wait ~ 3 seconds
-                for (int i = 0; i < 30; i++)
+                /*for (int i = 0; i < 30; i++)
                 {
                     if (!mySource.IsRunning)
                         break;
@@ -124,8 +135,7 @@ namespace Viewer
                 if (mySource.IsRunning)
                 {
                     mySource.WaitForStop();
-                    mySource.Stop();
-                }
+                }*/
 
                 mySource = null;
             }

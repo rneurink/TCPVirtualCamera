@@ -1,5 +1,5 @@
 ﻿
-namespace Viewer
+namespace AForgePlayer
 {
     partial class Form1
     {

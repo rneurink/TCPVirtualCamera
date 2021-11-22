@@ -4,6 +4,8 @@
     <OutputType>WinExe</OutputType>
     <TargetFramework>net48</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <AssemblyName>AForgePlayer</AssemblyName>
+    <RootNamespace>AForgePlayer</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>
