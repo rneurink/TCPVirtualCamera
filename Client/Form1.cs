@@ -15,6 +15,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using AForge.Video;
+using AForge.Video.DirectShow;
 using Microsoft.VisualBasic.Logging;
 
 namespace Client
@@ -28,13 +30,18 @@ namespace Client
 
         private CancellationTokenSource ct = new CancellationTokenSource();
 
+        private Stopwatch stopWatch = null;
+        private System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer() { Interval = 1000 };
+        private IVideoSource mySource;
+        private bool requestedStop = false;
+
         public Form1()
         {
             InitializeComponent();
 
             myClient.Log = LogToTextbox;
 
-
+            timer.Tick += Timer_Tick;
 
             Shown += (s, e) =>
             {
@@ -45,6 +52,7 @@ namespace Client
 
             Closing += (s, e) =>
             {
+                CloseCurrentVideoSource();
                 if (myClient.IsConnected)
                 {
                     myClients.ForEach(c => c.CloseClient());
@@ -64,6 +72,7 @@ namespace Client
                 cycleImageBTN.Enabled = false;
                 rgbTestBTN.Enabled = false;
                 portCB.Enabled = true;
+                sendCameraCB.Enabled = false;
             }
             else
             {
@@ -81,6 +90,7 @@ namespace Client
                 cycleImageBTN.Enabled = true;
                 rgbTestBTN.Enabled = true;
                 portCB.Enabled = false;
+                sendCameraCB.Enabled = true;
             }
         }
 
@@ -242,160 +252,121 @@ namespace Client
             portCB.Items.Add("Broadcast");
             portCB.SelectedIndex = 0;
         }
-    }
 
-
-
-    public class SynchronousSocketClient
-    {
-        private Socket sendSocket;
-
-        public bool IsConnected => sendSocket.Connected;
-        public void StartClient(int port = 1100)
+        private void Timer_Tick(object sender, EventArgs e)
         {
-            // Connect to a remote device.  
-            try
+            if (mySource != null)
             {
-                // Establish the remote endpoint for the socket.  
-                // This example uses port 11000 on the local computer.  
-                IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
-                IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
-                IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
+                // get number of frames since the last timer tick
+                int framesReceived = mySource.FramesReceived;
 
-                // Create a TCP/IP  socket.  
-                sendSocket = new Socket(ipAddress.AddressFamily,
-                                         SocketType.Stream, ProtocolType.Tcp);
+                if (stopWatch == null)
+                {
+                    stopWatch = new Stopwatch();
+                    stopWatch.Start();
+                }
+                else
+                {
+                    stopWatch.Stop();
 
-                // Connect the socket to the remote endpoint. Catch any errors.  
-                try
-                {
-                    sendSocket.Connect(remoteEP);
+                    float fps = 1000.0f * framesReceived / stopWatch.ElapsedMilliseconds;
+                    fpsLabel.Text = $@"FPS:{fps:##}";
 
-                    Debug.WriteLine(@"Socket connected to {0}",
-                                      sendSocket.RemoteEndPoint.ToString());
+                    stopWatch.Reset();
+                    stopWatch.Start();
                 }
-                catch (ArgumentNullException ane)
-                {
-                    Debug.WriteLine(@"ArgumentNullException : {0}", ane.ToString());
-                }
-                catch (SocketException se)
-                {
-                    Debug.WriteLine(@"SocketException : {0}", se.ToString());
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(@"Unexpected exception : {0}", e.ToString());
-                }
-
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.ToString());
             }
         }
 
-        public void SendData(byte[] data)
+        private void cameraBTN_Click(object sender, EventArgs e)
         {
-            try
+            if (mySource == null)
             {
-                int bytesSend = sendSocket.Send(data);
-                //Debug.WriteLine(@"Bytes send: {0}", bytesSend);
+                VideoCaptureDeviceForm form = new VideoCaptureDeviceForm();
+                if (form.ShowDialog(this) == DialogResult.OK)
+                {
+                    // create video source
+                    VideoCaptureDevice videoSource = form.VideoDevice;
+                    videoSource.NewFrame += VideoSourceOnNewFrame;
 
+                    requestedStop = false;
+
+                    // open it
+                    OpenVideoSource(videoSource);
+                }
+
+                cameraBTN.Text = @"Close source";
+                sendImageBTN.Enabled = false;
+                cycleImageBTN.Enabled = false;
+                rgbTestBTN.Enabled = false;
             }
-            catch (ArgumentNullException ane)
+            else
             {
-                Debug.WriteLine(@"ArgumentNullException : {0}", ane.ToString());
-            }
-            catch (SocketException se)
-            {
-                Debug.WriteLine(@"SocketException : {0}", se.ToString());
-            }
-            catch (Exception e)
-            {
-                Debug.WriteLine(@"Unexpected exception : {0}", e.ToString());
+                CloseCurrentVideoSource();
+                cameraBTN.Text = @"Select source";
+                sendImageBTN.Enabled = true;
+                cycleImageBTN.Enabled = true;
+                rgbTestBTN.Enabled = true;
             }
         }
 
-        public void CloseClient()
+        private void VideoSourceOnNewFrame(object sender, NewFrameEventArgs eventargs)
         {
+            if (requestedStop) return;
+            Bitmap bmp = new Bitmap(eventargs.Frame);
             try
             {
-                sendSocket.Shutdown(SocketShutdown.Both);
-                sendSocket.Close();
-            }
-            catch (ArgumentNullException ane)
-            {
-                Debug.WriteLine(@"ArgumentNullException : {0}", ane.ToString());
-            }
-            catch (SocketException se)
-            {
-                Debug.WriteLine(@"SocketException : {0}", se.ToString());
+                cameraPB?.Invoke(new Action(() =>
+                {
+                    using (cameraPB.Image)
+                    {
+                        Image old = cameraPB.Image;
+                        cameraPB.Image = (Bitmap)bmp.Clone();
+                        old?.Dispose();
+                    }
+                }));
+
+                if (sendCameraCB.Checked)
+                    myClient.SendBitmap(bmp, aspectRatioCB.Checked, true);
+                else 
+                    bmp.Dispose();
             }
             catch (Exception e)
             {
-                Debug.WriteLine(@"Unexpected exception : {0}", e.ToString());
+                Debug.WriteLine(e);
             }
         }
 
-        public static void StartClient(byte[] msg)
+        private void OpenVideoSource(IVideoSource source)
         {
-            // Data buffer for incoming data.  
-            byte[] bytes = new byte[2048];
+            // set busy cursor
+            this.Cursor = Cursors.WaitCursor;
 
-            // Connect to a remote device.  
-            try
+            // stop current video source
+            CloseCurrentVideoSource();
+
+            mySource = source;
+
+            // start new video source
+            mySource.Start();
+
+            // start timer
+            timer.Start();
+        }
+
+        // Close video source if it is running
+        private void CloseCurrentVideoSource()
+        {
+            if (mySource != null)
             {
-                // Establish the remote endpoint for the socket.  
-                // This example uses port 11000 on the local computer.  
-                IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
-                IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
-                IPEndPoint remoteEP = new IPEndPoint(ipAddress, 1100);
+                requestedStop = true;
+                mySource.NewFrame -= VideoSourceOnNewFrame;
+                mySource.SignalToStop();
 
-                // Create a TCP/IP  socket.  
-                Socket sender = new Socket(ipAddress.AddressFamily,
-                    SocketType.Stream, ProtocolType.Tcp);
-
-                // Connect the socket to the remote endpoint. Catch any errors.  
-                try
-                {
-                    sender.Connect(remoteEP);
-
-                    Debug.WriteLine(@"Socket connected to {0}",
-                        sender.RemoteEndPoint.ToString());
-
-
-                    // Send the data through the socket.  
-                    int bytesSent = sender.Send(msg);
-
-                    // Receive the response from the remote device.  
-                    //int bytesRec = sender.Receive(bytes);
-                    //string x = BitConverter.ToString(bytes).Replace("-", "");
-                    //Debug.WriteLine(@"Echoed test = {0}",
-                    //    x);
-
-                    // Release the socket.  
-                    sender.Shutdown(SocketShutdown.Both);
-                    sender.Close();
-
-                }
-                catch (ArgumentNullException ane)
-                {
-                    Debug.WriteLine(@"ArgumentNullException : {0}", ane.ToString());
-                }
-                catch (SocketException se)
-                {
-                    Debug.WriteLine(@"SocketException : {0}", se.ToString());
-                }
-                catch (Exception e)
-                {
-                    Debug.WriteLine(@"Unexpected exception : {0}", e.ToString());
-                }
-
+                mySource = null;
             }
-            catch (Exception e)
-            {
-                Debug.WriteLine(e.ToString());
-            }
+
+            timer.Stop();
         }
     }
 }

@@ -20,6 +20,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirectShowPlayer", "DirectS
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AForgePlayer", "AForgePlayer\AForgePlayer.csproj", "{7EF5AA9B-42CC-4674-8893-CC84B21E8106}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirectShowPlayerBitmap", "DirectShowPlayerBitmap\DirectShowPlayerBitmap.csproj", "{752C65EF-982F-456A-B70A-9FF0B2252CB1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -86,6 +88,18 @@ Global
 		{7EF5AA9B-42CC-4674-8893-CC84B21E8106}.Release|Win32.Build.0 = Release|Any CPU
 		{7EF5AA9B-42CC-4674-8893-CC84B21E8106}.Release|x64.ActiveCfg = Release|Any CPU
 		{7EF5AA9B-42CC-4674-8893-CC84B21E8106}.Release|x64.Build.0 = Release|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Debug|Win32.Build.0 = Debug|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Debug|x64.Build.0 = Debug|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Release|Win32.ActiveCfg = Release|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Release|Win32.Build.0 = Release|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Release|x64.ActiveCfg = Release|Any CPU
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -94,6 +108,7 @@ Global
 		{E8A3F6FA-AE1C-4C8E-A0B6-9C8480324EAA} = {0823DFE3-0A17-4F00-8CE6-52DE4934320A}
 		{40A43B94-0A16-450B-8117-777EF9F9E771} = {3B14DC0B-E477-469F-A02B-E3C3AE9EF65C}
 		{7EF5AA9B-42CC-4674-8893-CC84B21E8106} = {3B14DC0B-E477-469F-A02B-E3C3AE9EF65C}
+		{752C65EF-982F-456A-B70A-9FF0B2252CB1} = {3B14DC0B-E477-469F-A02B-E3C3AE9EF65C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {75187E73-8739-4B1D-980C-85A105EB7240}

@@ -31,7 +31,9 @@ namespace Client
         {
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
-            this.button1 = new System.Windows.Forms.Button();
+            this.sendCameraCB = new System.Windows.Forms.CheckBox();
+            this.fpsLabel = new System.Windows.Forms.Label();
+            this.cameraBTN = new System.Windows.Forms.Button();
             this.groupBox4 = new System.Windows.Forms.GroupBox();
             this.cameraPB = new System.Windows.Forms.PictureBox();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
@@ -82,7 +84,9 @@ namespace Client
             // 
             // groupBox3
             // 
-            this.groupBox3.Controls.Add(this.button1);
+            this.groupBox3.Controls.Add(this.sendCameraCB);
+            this.groupBox3.Controls.Add(this.fpsLabel);
+            this.groupBox3.Controls.Add(this.cameraBTN);
             this.groupBox3.Controls.Add(this.groupBox4);
             this.groupBox3.Location = new System.Drawing.Point(188, 11);
             this.groupBox3.Name = "groupBox3";
@@ -91,14 +95,35 @@ namespace Client
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Camera passthrough";
             // 
-            // button1
+            // sendCameraCB
             // 
-            this.button1.Location = new System.Drawing.Point(6, 22);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 1;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
+            this.sendCameraCB.AutoSize = true;
+            this.sendCameraCB.Enabled = false;
+            this.sendCameraCB.Location = new System.Drawing.Point(6, 51);
+            this.sendCameraCB.Name = "sendCameraCB";
+            this.sendCameraCB.Size = new System.Drawing.Size(133, 19);
+            this.sendCameraCB.TabIndex = 3;
+            this.sendCameraCB.Text = "Pass source through";
+            this.sendCameraCB.UseVisualStyleBackColor = true;
+            // 
+            // fpsLabel
+            // 
+            this.fpsLabel.AutoSize = true;
+            this.fpsLabel.Location = new System.Drawing.Point(162, 26);
+            this.fpsLabel.Name = "fpsLabel";
+            this.fpsLabel.Size = new System.Drawing.Size(46, 15);
+            this.fpsLabel.TabIndex = 2;
+            this.fpsLabel.Text = "FPS: XX";
+            // 
+            // cameraBTN
+            // 
+            this.cameraBTN.Location = new System.Drawing.Point(6, 22);
+            this.cameraBTN.Name = "cameraBTN";
+            this.cameraBTN.Size = new System.Drawing.Size(150, 23);
+            this.cameraBTN.TabIndex = 1;
+            this.cameraBTN.Text = "Select source";
+            this.cameraBTN.UseVisualStyleBackColor = true;
+            this.cameraBTN.Click += new System.EventHandler(this.cameraBTN_Click);
             // 
             // groupBox4
             // 
@@ -285,6 +310,7 @@ namespace Client
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
             this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
             this.groupBox4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.cameraPB)).EndInit();
             this.groupBox2.ResumeLayout(false);
@@ -315,7 +341,9 @@ namespace Client
         private System.Windows.Forms.GroupBox groupBox3;
         private System.Windows.Forms.GroupBox groupBox4;
         private System.Windows.Forms.PictureBox cameraPB;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button cameraBTN;
+        private System.Windows.Forms.Label fpsLabel;
+        private System.Windows.Forms.CheckBox sendCameraCB;
     }
 }
 

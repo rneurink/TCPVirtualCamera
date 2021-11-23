@@ -14,6 +14,8 @@ namespace DirectShowPlayer
 {
     public partial class Form1 : Form
     {
+        const int DEVICE_INDEX = 1; // Change this to select the correct videocapture device
+
         public Form1()
         {
             InitializeComponent();
@@ -108,7 +110,7 @@ namespace DirectShowPlayer
             devices = DsDevice.GetDevicesOfCat(FilterCategory.VideoInputDevice);
 
             // Take the first device
-            DsDevice device = (DsDevice)devices[1];
+            DsDevice device = (DsDevice)devices[DEVICE_INDEX];
 
             // Bind Moniker to a filter object
             Guid iid = typeof(IBaseFilter).GUID;

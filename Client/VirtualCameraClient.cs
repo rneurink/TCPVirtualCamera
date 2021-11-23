@@ -98,53 +98,84 @@ namespace Client
             }
         }
 
-        public void SendBitmap(Bitmap bitmap, bool keepAspectRatio = false)
+        /// <summary>
+        /// Sends a bitmap to the virtual camera. This will resize the image to 1920x1080 if the source is a different resolution
+        /// Speed comp: image is already the right size: 15ms, resize not keeping aspect ratio: 95ms, resize keeping aspect ratio: 160ms
+        /// </summary>
+        /// <param name="bitmap"></param>
+        /// <param name="keepAspectRatio"></param>
+        /// <param name="disposeImage"></param>
+        public void SendBitmap(Bitmap bitmap, bool keepAspectRatio = false, bool disposeImage = true)
         {
-            var resizedbmp = new Bitmap(1920,1080);
-            bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
-            if (keepAspectRatio)
+            byte[] rgbBytes;
+
+            // Check if the image is already the right size
+            if (bitmap.Width != 1920 ||
+                bitmap.Height != 1080)
             {
-                using (Graphics g = Graphics.FromImage(resizedbmp))
+                // Source is not 1920x1080 resize
+                var resizedbmp = new Bitmap(1920, 1080);
+                bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                if (keepAspectRatio)
                 {
-                    g.InterpolationMode = InterpolationMode.HighQualityBicubic;
-                    g.SmoothingMode = SmoothingMode.HighQuality;
-                    g.PixelOffsetMode = PixelOffsetMode.HighQuality;
-                    g.CompositingQuality = CompositingQuality.HighQuality;
+                    // Resize keeping aspect ratio this is rather slow using the graphics class of .net
+                    using (Graphics g = Graphics.FromImage(resizedbmp))
+                    {
+                        g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                        g.SmoothingMode = SmoothingMode.HighQuality;
+                        g.PixelOffsetMode = PixelOffsetMode.HighQuality;
+                        g.CompositingQuality = CompositingQuality.HighQuality;
 
-                    // Figure out the ratio
-                    float ratioX = (float)resizedbmp.Width / (float)bitmap.Width;
-                    float ratioY = (float)resizedbmp.Height / (float)bitmap.Height;
-                    // use whichever multiplier is smaller
-                    double ratio = ratioX < ratioY ? ratioX : ratioY;
+                        // Figure out the ratio
+                        float ratioX = (float)resizedbmp.Width / (float)bitmap.Width;
+                        float ratioY = (float)resizedbmp.Height / (float)bitmap.Height;
+                        // use whichever multiplier is smaller
+                        double ratio = ratioX < ratioY ? ratioX : ratioY;
 
-                    // now we can get the new height and width
-                    int newHeight = Convert.ToInt32(bitmap.Height * ratio);
-                    int newWidth = Convert.ToInt32(bitmap.Width * ratio);
+                        // now we can get the new height and width
+                        int newHeight = Convert.ToInt32(bitmap.Height * ratio);
+                        int newWidth = Convert.ToInt32(bitmap.Width * ratio);
 
-                    // Now calculate the X,Y position of the upper-left corner 
-                    // (one of these will always be zero)
-                    int posX = Convert.ToInt32((resizedbmp.Width - (bitmap.Width * ratio)) / 2);
-                    int posY = Convert.ToInt32((resizedbmp.Height - (bitmap.Height * ratio)) / 2);
+                        // Now calculate the X,Y position of the upper-left corner 
+                        // (one of these will always be zero)
+                        int posX = Convert.ToInt32((resizedbmp.Width - (bitmap.Width * ratio)) / 2);
+                        int posY = Convert.ToInt32((resizedbmp.Height - (bitmap.Height * ratio)) / 2);
 
-                    g.Clear(Color.White); // white padding
-                    g.DrawImage(bitmap, posX, posY, newWidth, newHeight);
+                        g.Clear(Color.White); // white padding
+                        g.DrawImage(bitmap, posX, posY, newWidth, newHeight);
+                    }
                 }
+                else
+                {
+                    // Resize not keeping aspect ratio. This is about 
+                    resizedbmp = new Bitmap(bitmap, new Size(1920, 1080));
+                }
+
+                var rect = new Rectangle(0, 0, resizedbmp.Width, resizedbmp.Height);
+                BitmapData data = resizedbmp.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+
+                int bytes = Math.Abs(data.Stride) * resizedbmp.Height;
+                rgbBytes = new byte[bytes];
+
+                System.Runtime.InteropServices.Marshal.Copy(data.Scan0, rgbBytes, 0, bytes);
+                resizedbmp.UnlockBits(data);
+                resizedbmp.Dispose();
             }
             else
             {
-                resizedbmp = new Bitmap(bitmap, new Size(1920, 1080));
+                bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
+                var rect = new Rectangle(0, 0, bitmap.Width, bitmap.Height);
+                BitmapData data = bitmap.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
+
+                int bytes = Math.Abs(data.Stride) * bitmap.Height;
+                rgbBytes = new byte[bytes];
+
+                System.Runtime.InteropServices.Marshal.Copy(data.Scan0, rgbBytes, 0, bytes);
+                bitmap.UnlockBits(data);
             }
-
-            var rect = new Rectangle(0, 0, resizedbmp.Width, resizedbmp.Height);
-            BitmapData data = resizedbmp.LockBits(rect, ImageLockMode.ReadOnly, PixelFormat.Format24bppRgb);
-
-            int bytes = Math.Abs(data.Stride) * resizedbmp.Height;
-            byte[] rgbBytes = new byte[bytes];
-
-            System.Runtime.InteropServices.Marshal.Copy(data.Scan0, rgbBytes, 0, bytes);
-            resizedbmp.UnlockBits(data);
-            resizedbmp.Dispose();
-            bitmap.Dispose();
+            
+            if (disposeImage)
+                bitmap.Dispose();
 
             SendData(rgbBytes);
         }
