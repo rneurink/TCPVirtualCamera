@@ -2,8 +2,8 @@
 
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
-#define BMP_WIDTH   1920
-#define BMP_HEIGHT  1080
+#define BMP_WIDTH   1280
+#define BMP_HEIGHT  720
 
 
 EXTERN_C const GUID CLSID_VirtualCam;

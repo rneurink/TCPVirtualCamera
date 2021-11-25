@@ -17,6 +17,9 @@ namespace Client
     {
         #region Private Members
 
+        private const int CAMERA_WIDTH = 1280;
+        private const int CAMERA_HEIGHT = 720;
+
         private const int DEFAULT_PORT = 1100;
         private const int MAX_PORT = 1110;
 
@@ -110,11 +113,11 @@ namespace Client
             byte[] rgbBytes;
 
             // Check if the image is already the right size
-            if (bitmap.Width != 1920 ||
-                bitmap.Height != 1080)
+            if (bitmap.Width != CAMERA_WIDTH ||
+                bitmap.Height != CAMERA_HEIGHT)
             {
                 // Source is not 1920x1080 resize
-                var resizedbmp = new Bitmap(1920, 1080);
+                var resizedbmp = new Bitmap(CAMERA_WIDTH, CAMERA_HEIGHT);
                 bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
                 if (keepAspectRatio)
                 {
@@ -148,7 +151,7 @@ namespace Client
                 else
                 {
                     // Resize not keeping aspect ratio. This is about 
-                    resizedbmp = new Bitmap(bitmap, new Size(1920, 1080));
+                    resizedbmp = new Bitmap(bitmap, new Size(CAMERA_WIDTH, CAMERA_HEIGHT));
                 }
 
                 var rect = new Rectangle(0, 0, resizedbmp.Width, resizedbmp.Height);
@@ -182,7 +185,7 @@ namespace Client
 
         public void SendColorFrame(Color color)
         {
-            using (var bmp = new Bitmap(1920, 1080, PixelFormat.Format24bppRgb))
+            using (var bmp = new Bitmap(CAMERA_WIDTH, CAMERA_HEIGHT, PixelFormat.Format24bppRgb))
             {
                 Graphics g = Graphics.FromImage(bmp);
                 var rect = new Rectangle(0, 0, bmp.Width, bmp.Height);

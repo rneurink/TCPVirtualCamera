@@ -73,6 +73,7 @@ namespace Client
                 rgbTestBTN.Enabled = false;
                 portCB.Enabled = true;
                 sendCameraCB.Enabled = false;
+                sendCameraCB.Checked = false;
             }
             else
             {

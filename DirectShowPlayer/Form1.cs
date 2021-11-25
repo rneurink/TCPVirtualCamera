@@ -14,7 +14,7 @@ namespace DirectShowPlayer
 {
     public partial class Form1 : Form
     {
-        const int DEVICE_INDEX = 1; // Change this to select the correct videocapture device
+        const int DEVICE_INDEX = 0; // Change this to select the correct videocapture device
 
         public Form1()
         {

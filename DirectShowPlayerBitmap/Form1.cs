@@ -18,9 +18,9 @@ namespace DirectShowPlayerBitmap
     public partial class Form1 : Form
     {
         const int VIDEODEVICE = 0; // zero based index of video capture device to use
-        const int FRAMERATE = 30;  // Depends on video device caps.  Generally 4-30.
-        const int VIDEOWIDTH = 1920; // Depends on video device caps
-        const int VIDEOHEIGHT = 1080; // Depends on video device caps
+        const int FRAMERATE = 0;  // Depends on video device caps.  Generally 4-30.
+        const int VIDEOWIDTH = 1280; // Depends on video device caps
+        const int VIDEOHEIGHT = 720; // Depends on video device caps
 
         private volatile bool busyShutdown = false;
         private Thread CaptureThread;
