@@ -49,6 +49,7 @@ namespace Client
             this.rgbTestBTN = new System.Windows.Forms.Button();
             this.sendImageBTN = new System.Windows.Forms.Button();
             this.logTextBox = new System.Windows.Forms.RichTextBox();
+            this.comboBox1 = new System.Windows.Forms.ComboBox();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -84,6 +85,7 @@ namespace Client
             // 
             // groupBox3
             // 
+            this.groupBox3.Controls.Add(this.comboBox1);
             this.groupBox3.Controls.Add(this.sendCameraCB);
             this.groupBox3.Controls.Add(this.fpsLabel);
             this.groupBox3.Controls.Add(this.cameraBTN);
@@ -297,6 +299,15 @@ namespace Client
             this.logTextBox.TabIndex = 0;
             this.logTextBox.Text = "";
             // 
+            // comboBox1
+            // 
+            this.comboBox1.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.comboBox1.FormattingEnabled = true;
+            this.comboBox1.Location = new System.Drawing.Point(22, 106);
+            this.comboBox1.Name = "comboBox1";
+            this.comboBox1.Size = new System.Drawing.Size(121, 23);
+            this.comboBox1.TabIndex = 4;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -344,6 +355,7 @@ namespace Client
         private System.Windows.Forms.Button cameraBTN;
         private System.Windows.Forms.Label fpsLabel;
         private System.Windows.Forms.CheckBox sendCameraCB;
+        private System.Windows.Forms.ComboBox comboBox1;
     }
 }
 

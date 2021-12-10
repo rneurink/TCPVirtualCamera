@@ -1,14 +1,33 @@
 #pragma once
 
+#include <deque>
+
 #define DECLARE_PTR(type, ptr, expr) type* ptr = (type*)(expr);
 
-#define BMP_WIDTH   1280
-#define BMP_HEIGHT  720
-
+#define MIN_WIDTH 320
+#define MIN_HEIGHT 240
+#define MAX_WIDTH 1920
+#define MAX_HEIGHT 1080
+#define MAX_FRAMETIME 1000000
+#define MIN_FRAMETIME 166666
+#define SLEEP_DURATION 5
 
 EXTERN_C const GUID CLSID_VirtualCam;
 
 class CVCamStream;
+
+struct format
+{
+	format(int width_, int height_, int64_t time_per_frame_) {
+		width = width_;
+		height = height_;
+		time_per_frame = time_per_frame_;
+	}
+	int width;
+	int height;
+	int64_t time_per_frame;
+};
+
 class CVCam : public CSource
 {
 public:
@@ -16,12 +35,15 @@ public:
     //  IUnknown
     //////////////////////////////////////////////////////////////////////////
     static CUnknown * WINAPI CreateInstance(LPUNKNOWN lpunk, HRESULT *phr);
-    STDMETHODIMP QueryInterface(REFIID riid, void **ppv);
+    STDMETHODIMP NonDelegatingQueryInterface(REFIID riid, void **ppv);
 
     IFilterGraph *GetGraph() {return m_pGraph;}
+    FILTER_STATE GetState(){ return m_State; }
+
+    CVCam(LPUNKNOWN lpunk, HRESULT *phr);
 
 private:
-    CVCam(LPUNKNOWN lpunk, HRESULT *phr);
+    CVCamStream *stream = nullptr;
 };
 
 class CVCamStream : public CSourceStream, public IAMStreamConfig, public IKsPropertySet
@@ -67,19 +89,26 @@ public:
     HRESULT GetMediaType(int iPosition, CMediaType *pmt);
     HRESULT SetMediaType(const CMediaType *pmt);
     HRESULT OnThreadCreate(void);
+    HRESULT OnThreadDestroy(void);
     
 private:
+    void ListSupportFormat(void);
+    bool ValidateResolution(long width, long height);
+
     int SetupServer();
     void CleanupServer();
     
     CVCam *m_pParent;
     REFERENCE_TIME m_rtLastTime;
-    HBITMAP m_hLogoBmp;
     CCritSec m_cSharedState;
     IReferenceClock *m_pClock;
 
+    std::deque<format> format_list;
+
     struct addrinfo* serverinfo = NULL;
     HANDLE server_thread = NULL;
+
+    int currentformatIndex;
 };
 
 

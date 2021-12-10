@@ -17,9 +17,6 @@ namespace Client
     {
         #region Private Members
 
-        private const int CAMERA_WIDTH = 1280;
-        private const int CAMERA_HEIGHT = 720;
-
         private const int DEFAULT_PORT = 1100;
         private const int MAX_PORT = 1110;
 
@@ -29,6 +26,10 @@ namespace Client
         #endregion
 
         #region Public Properties
+
+        public Size CameraImageSize { get; set; } = new Size(1280, 720);
+
+
 
         public bool IsConnected => myClientSocket?.Connected ?? false;
         public EndPoint Endpoint => myClientSocket?.LocalEndPoint;
@@ -113,11 +114,11 @@ namespace Client
             byte[] rgbBytes;
 
             // Check if the image is already the right size
-            if (bitmap.Width != CAMERA_WIDTH ||
-                bitmap.Height != CAMERA_HEIGHT)
+            if (bitmap.Width != CameraImageSize.Width ||
+                bitmap.Height != CameraImageSize.Height)
             {
                 // Source is not 1920x1080 resize
-                var resizedbmp = new Bitmap(CAMERA_WIDTH, CAMERA_HEIGHT);
+                var resizedbmp = new Bitmap(CameraImageSize.Width, CameraImageSize.Height);
                 bitmap.RotateFlip(RotateFlipType.RotateNoneFlipY);
                 if (keepAspectRatio)
                 {
@@ -151,7 +152,7 @@ namespace Client
                 else
                 {
                     // Resize not keeping aspect ratio. This is about 
-                    resizedbmp = new Bitmap(bitmap, new Size(CAMERA_WIDTH, CAMERA_HEIGHT));
+                    resizedbmp = new Bitmap(bitmap, CameraImageSize);
                 }
 
                 var rect = new Rectangle(0, 0, resizedbmp.Width, resizedbmp.Height);
@@ -185,7 +186,7 @@ namespace Client
 
         public void SendColorFrame(Color color)
         {
-            using (var bmp = new Bitmap(CAMERA_WIDTH, CAMERA_HEIGHT, PixelFormat.Format24bppRgb))
+            using (var bmp = new Bitmap(CameraImageSize.Width, CameraImageSize.Height, PixelFormat.Format24bppRgb))
             {
                 Graphics g = Graphics.FromImage(bmp);
                 var rect = new Rectangle(0, 0, bmp.Width, bmp.Height);

@@ -25,7 +25,7 @@ DEFINE_GUID(CLSID_VirtualCam,
 const AMOVIESETUP_MEDIATYPE AMSMediaTypesVCam = 
 { 
     &MEDIATYPE_Video, 
-    &MEDIASUBTYPE_NULL 
+    &MEDIASUBTYPE_RGB24 
 };
 
 const AMOVIESETUP_PIN AMSPinVCam=
@@ -44,7 +44,7 @@ const AMOVIESETUP_PIN AMSPinVCam=
 const AMOVIESETUP_FILTER AMSFilterVCam =
 {
     &CLSID_VirtualCam,  // Filter CLSID
-    L"Virtual Cam",     // String name
+    L"Virtual TCP Cam",     // String name
     MERIT_DO_NOT_USE,      // Filter merit
     1,                     // Number pins
     &AMSPinVCam             // Pin details
@@ -53,7 +53,7 @@ const AMOVIESETUP_FILTER AMSFilterVCam =
 CFactoryTemplate g_Templates[] = 
 {
     {
-        L"Virtual Cam",
+        L"Virtual TCP Cam",
         &CLSID_VirtualCam,
         CVCam::CreateInstance,
         NULL,
@@ -80,7 +80,7 @@ STDAPI RegisterFilters( BOOL bRegister )
     hr = CoInitialize(0);
     if(bRegister)
     {
-        hr = AMovieSetupRegisterServer(CLSID_VirtualCam, L"Virtual Cam", achFileName, L"Both", L"InprocServer32");
+        hr = AMovieSetupRegisterServer(*(g_Templates[0].m_ClsID), g_Templates[0].m_Name, achFileName, L"Both", L"InprocServer32");
     }
 
     if( SUCCEEDED(hr) )
@@ -97,11 +97,11 @@ STDAPI RegisterFilters( BOOL bRegister )
                 rf2.dwMerit = MERIT_DO_NOT_USE;
                 rf2.cPins = 1;
                 rf2.rgPins = &AMSPinVCam;
-                hr = fm->RegisterFilter(CLSID_VirtualCam, L"Virtual Cam", &pMoniker, &CLSID_VideoInputDeviceCategory, NULL, &rf2);
+                hr = fm->RegisterFilter(*(g_Templates[0].m_ClsID), g_Templates[0].m_Name, &pMoniker, &CLSID_VideoInputDeviceCategory, NULL, &rf2);
             }
             else
             {
-                hr = fm->UnregisterFilter(&CLSID_VideoInputDeviceCategory, 0, CLSID_VirtualCam);
+                hr = fm->UnregisterFilter(&CLSID_VideoInputDeviceCategory, 0, *(g_Templates[0].m_ClsID));
             }
         }
 
@@ -112,7 +112,7 @@ STDAPI RegisterFilters( BOOL bRegister )
     }
 
     if( SUCCEEDED(hr) && !bRegister )
-        hr = AMovieSetupUnregisterServer( CLSID_VirtualCam );
+        hr = AMovieSetupUnregisterServer( *(g_Templates[0].m_ClsID) );
 
     CoFreeUnusedLibraries();
     CoUninitialize();

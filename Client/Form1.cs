@@ -34,6 +34,7 @@ namespace Client
         private System.Windows.Forms.Timer timer = new System.Windows.Forms.Timer() { Interval = 1000 };
         private IVideoSource mySource;
         private bool requestedStop = false;
+        private Size[] sizes = new[] {new Size(1920, 1080), new Size(1280, 720), new Size(480, 360), new Size(320, 240)};
 
         public Form1()
         {
@@ -48,6 +49,12 @@ namespace Client
                 portCB.Items.AddRange(myClient.GetAvailablePorts().Cast<object>().ToArray());
                 portCB.Items.Add("Broadcast");
                 portCB.SelectedIndex = 0;
+
+
+
+                comboBox1.Items.AddRange(new []{"1920x1080 30", "1280x720 30", "480x360 30", "320x240 30"});
+                comboBox1.SelectedIndex = 0;
+                comboBox1.SelectedIndexChanged += (se, ev) => { myClient.CameraImageSize = sizes[comboBox1.SelectedIndex]; };
             };
 
             Closing += (s, e) =>
