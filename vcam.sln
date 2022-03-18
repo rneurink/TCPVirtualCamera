@@ -16,11 +16,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Base dependency", "Base dep
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Simple video viewers", "Simple video viewers", "{3B14DC0B-E477-469F-A02B-E3C3AE9EF65C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirectShowPlayer", "DirectShowPlayer\DirectShowPlayer.csproj", "{40A43B94-0A16-450B-8117-777EF9F9E771}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DirectShowPlayer", "DirectShowPlayer\DirectShowPlayer.csproj", "{40A43B94-0A16-450B-8117-777EF9F9E771}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AForgePlayer", "AForgePlayer\AForgePlayer.csproj", "{7EF5AA9B-42CC-4674-8893-CC84B21E8106}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DirectShowPlayerBitmap", "DirectShowPlayerBitmap\DirectShowPlayerBitmap.csproj", "{752C65EF-982F-456A-B70A-9FF0B2252CB1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DirectShowPlayerBitmap", "DirectShowPlayerBitmap\DirectShowPlayerBitmap.csproj", "{752C65EF-982F-456A-B70A-9FF0B2252CB1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Server", "Server\Server.csproj", "{80D716C6-954D-4EDC-95EA-431531886472}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -100,6 +102,18 @@ Global
 		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Release|Win32.Build.0 = Release|Any CPU
 		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Release|x64.ActiveCfg = Release|Any CPU
 		{752C65EF-982F-456A-B70A-9FF0B2252CB1}.Release|x64.Build.0 = Release|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Debug|Win32.ActiveCfg = Debug|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Debug|Win32.Build.0 = Debug|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Debug|x64.Build.0 = Debug|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Release|Any CPU.Build.0 = Release|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Release|Win32.ActiveCfg = Release|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Release|Win32.Build.0 = Release|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Release|x64.ActiveCfg = Release|Any CPU
+		{80D716C6-954D-4EDC-95EA-431531886472}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

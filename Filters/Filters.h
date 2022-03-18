@@ -12,6 +12,22 @@
 #define MIN_FRAMETIME 166666
 #define SLEEP_DURATION 5
 
+//#define TCP_SERVER
+#define TCP_CLIENT
+
+#ifndef TCP_SERVER
+#ifndef TCP_CLIENT
+#error Need to define a client or server
+#endif
+#endif
+
+#ifdef TCP_SERVER
+#ifdef TCP_CLIENT
+#error Cannot use both client and server
+#endif
+#endif
+
+
 EXTERN_C const GUID CLSID_VirtualCam;
 
 class CVCamStream;
@@ -95,9 +111,15 @@ private:
     void ListSupportFormat(void);
     bool ValidateResolution(long width, long height);
 
+#ifdef TCP_SERVER
     int SetupServer();
     void CleanupServer();
-    
+#endif
+#ifdef TCP_CLIENT
+    int SetupClient();
+    void CleanupClient();
+#endif
+
     CVCam *m_pParent;
     REFERENCE_TIME m_rtLastTime;
     CCritSec m_cSharedState;
@@ -105,8 +127,14 @@ private:
 
     std::deque<format> format_list;
 
+#ifdef TCP_SERVER
     struct addrinfo* serverinfo = NULL;
     HANDLE server_thread = NULL;
+#endif
+#ifdef TCP_CLIENT
+    struct addrinfo* clientinfo = NULL;
+    HANDLE client_thread = NULL;
+#endif
 
     int currentformatIndex;
 };

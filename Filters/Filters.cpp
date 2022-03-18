@@ -27,16 +27,38 @@
 
 #define DEFAULT_PORT 1100
 
-DWORD WINAPI ServerThread(LPVOID lpParam);
-bool CheckIfPortAvailable(short int dwPort);
-
 #define BUFFER_LENGTH (MAX_WIDTH * MAX_HEIGHT * 3)
 
-SOCKET server_socket = INVALID_SOCKET;
-long bufferlength;
 byte* framePointer;
 byte frameBuffer[BUFFER_LENGTH];
 
+#ifdef TCP_SERVER
+DWORD WINAPI ServerThread(LPVOID lpParam);
+bool CheckIfPortAvailable(short int dwPort);
+
+SOCKET server_socket = INVALID_SOCKET;
+#endif // TCP_SERVER
+
+struct TCPClientInfo
+{
+    TCPClientInfo() {
+        client_socket = INVALID_SOCKET;
+        addressinfo = NULL;
+    }
+    TCPClientInfo(SOCKET socket_, struct addrinfo* addressinfo_) {
+        client_socket = socket_;
+        addressinfo = addressinfo_;
+    }
+    SOCKET client_socket;
+    struct addrinfo* addressinfo = NULL;
+};
+
+#ifdef TCP_CLIENT
+DWORD WINAPI ClientThread(LPVOID lpParam);
+
+SOCKET client_socket = INVALID_SOCKET;
+TCPClientInfo client_info;
+#endif // TCP_CLIENT
 
 #pragma region CVCam
 //////////////////////////////////////////////////////////////////////////
@@ -50,7 +72,7 @@ CUnknown * WINAPI CVCam::CreateInstance(LPUNKNOWN lpunk, HRESULT *phr)
 }
 
 CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) : 
-    CSource(NAME("Virtual TCP Cam"), lpunk, CLSID_VirtualCam)
+    CSource(NAME("Virtual TCP Cam"), lpunk, CLSID_VirtualCam) // Source name
 {
     //DbgLog((LOG_TRACE, 0, TEXT("Creating camera object"))); // not working somehow
     //DbgOutString("Hello World"); // Compile error
@@ -59,7 +81,7 @@ CVCam::CVCam(LPUNKNOWN lpunk, HRESULT *phr) :
     CAutoLock cAutoLock(&m_cStateLock);
     // Create the one and only output pin
     m_paStreams = (CSourceStream **) new CVCamStream*[1];
-    stream = new CVCamStream(phr, this, L"Virtual Video");
+    stream = new CVCamStream(phr, this, L"Virtual Video"); // Pinname
     m_paStreams[0] = stream;
 }
 
@@ -84,14 +106,24 @@ CVCamStream::CVCamStream(HRESULT *phr, CVCam *pParent, LPCWSTR pPinName) :
     // Set the default media type as 1920x1080 30Hz
     GetMediaType(0, &m_mt);
     
+#ifdef TCP_SERVER
     //DbgLog((LOG_CUSTOM1, 1, TEXT("Starting server")));
     SetupServer();
     //DbgLog((LOG_TRACE, 3, TEXT("test string")));
+#endif
+#ifdef TCP_CLIENT
+    SetupClient();
+#endif
 }
 
 CVCamStream::~CVCamStream()
 {
+#ifdef TCP_SERVER
     CleanupServer();
+#endif
+#ifdef TCP_CLIENT
+    CleanupClient();
+#endif
 } 
 
 HRESULT CVCamStream::QueryInterface(REFIID riid, void **ppv)
@@ -455,12 +487,10 @@ HRESULT CVCamStream::QuerySupported(REFGUID guidPropSet, DWORD dwPropID, DWORD *
 // 
 //////////////////////////////////////////////////////////////////////////
 #pragma region TCP Server
+#ifdef TCP_SERVER
 
 int CVCamStream::SetupServer() {
-
-    bufferlength = sizeof(frameBuffer);
     framePointer = &frameBuffer[0];
-
 
     WSADATA wsaData;
     int iResult;
@@ -564,89 +594,48 @@ DWORD WINAPI ServerThread(LPVOID lpParam)
     SOCKADDR_STORAGE from;
     char servstr[NI_MAXSERV],
          hoststr[NI_MAXHOST];
-    int socket_type,
-        retval,
+    int retval,
         fromlen,
         bytecount;
 
     // Retrieve the socket handle
     server_socket_handle = (SOCKET)lpParam;
 
-    // Get the socket type back
-    fromlen = sizeof(socket_type);
-    retval = getsockopt(server_socket_handle, SOL_SOCKET, SO_TYPE, (char*)&socket_type, &fromlen);
-    if (retval == INVALID_SOCKET)
-    {
-        fprintf(stderr, "getsockopt(SO_TYPE) failed: %d\n", WSAGetLastError());
-        goto cleanup;
-    }
-
-    for (;;)
-    {
-        fromlen = sizeof(from);
-
-        if (socket_type == SOCK_STREAM)
-        {
-            if (client_socket != INVALID_SOCKET)
-            {
-                //
-                // If we have a client connection recv and send until done
-                //
-                bytecount = recv(client_socket, (char*)frameBuffer, BUFFER_LENGTH, 0);
-                if (bytecount == SOCKET_ERROR)
-                {
-                    fprintf(stderr, "recv failed: %d\n", WSAGetLastError());
-                    goto cleanup;
-                }
-                else if (bytecount == 0)
-                {
-                    // Client connection was closed
-                    retval = shutdown(client_socket, SD_SEND);
-                    if (retval == SOCKET_ERROR)
-                    {
-                        fprintf(stderr, "shutdown failed: %d\n", WSAGetLastError());
-                        goto cleanup;
-                    }
-
-                    closesocket(client_socket);
-                    client_socket = INVALID_SOCKET;
-                }
+    for (;;) {
+        if (client_socket != INVALID_SOCKET) {
+            //
+            // If we have a client connection recv and send until done
+            //
+            bytecount = recv(client_socket, (char*)frameBuffer, BUFFER_LENGTH, 0);
+            if (bytecount == SOCKET_ERROR) {
+                fprintf(stderr, "recv failed: %d\n", WSAGetLastError());
+                closesocket(client_socket);
+                client_socket = INVALID_SOCKET;
             }
-            else
-            {
-                //
-                // No client connection so wait for one
-                //
-                client_socket = accept(server_socket_handle, (SOCKADDR*)&from, &fromlen);
-                if (client_socket == INVALID_SOCKET)
-                {
-                    fprintf(stderr, "accept failed: %d\n", WSAGetLastError());
-                    goto cleanup;
+            else if (bytecount == 0) {
+                // Client connection was closed
+                retval = shutdown(client_socket, SD_SEND);
+                if (retval == SOCKET_ERROR) {
+                    fprintf(stderr, "shutdown failed: %d\n", WSAGetLastError());
                 }
 
-                // Display the client's address
-                retval = getnameinfo(
-                    (SOCKADDR*)&from,
-                    fromlen,
-                    hoststr,
-                    NI_MAXHOST,
-                    servstr,
-                    NI_MAXSERV,
-                    NI_NUMERICHOST | NI_NUMERICSERV
-                );
-                if (retval != 0)
-                {
-                    fprintf(stderr, "getnameinfo failed: %d\n", retval);
-                    goto cleanup;
-                }
+                closesocket(client_socket);
+                client_socket = INVALID_SOCKET;
+            }
 
-                printf("Accepted connection from host %s and port %s\n",
-                    hoststr, servstr);
+        } else {
+            fromlen = sizeof(from);
+            //
+            // No client connection so wait for one
+            //
+            client_socket = accept(server_socket_handle, (SOCKADDR*)&from, &fromlen);
+            if (client_socket == INVALID_SOCKET) {
+                fprintf(stderr, "accept failed: %d\n", WSAGetLastError());
+                closesocket(client_socket);
+                client_socket = INVALID_SOCKET;
             }
         }
     }
-
-cleanup:
 
     // Close the client connection if present
     if (client_socket != INVALID_SOCKET)
@@ -712,4 +701,125 @@ bool CheckIfPortAvailable(short int dwPort) {
     }
 }
 
+#endif
+#pragma endregion
+
+#pragma region TCP client
+#ifdef TCP_CLIENT
+
+int CVCamStream::SetupClient() {
+    framePointer = &frameBuffer[0];
+
+    WSAData wsaData;
+    int iResult;
+    SOCKET client_socket = INVALID_SOCKET;
+    struct addrinfo* clientinfo = NULL;
+
+    struct addrinfo hints;
+
+    // Initialize Winsock
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0) {
+        fprintf(stderr, "WSAStartup failed with error: %d\n", iResult);
+        return 1;
+    }
+
+    ZeroMemory(&hints, sizeof(hints));
+    hints.ai_family = AF_INET;
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+
+    std::ostringstream oss;
+    oss << DEFAULT_PORT;
+
+    // Resolve the server address and port
+    iResult = getaddrinfo("localhost", oss.str().c_str(), &hints, &clientinfo);
+    if (iResult != 0) {
+        fprintf(stderr, "getaddrinfo failed with error: %d\n", iResult);
+        WSACleanup();
+        return 1;
+    }
+
+    client_info = TCPClientInfo(client_socket, clientinfo);
+    
+    client_thread = CreateThread(
+        NULL,
+        0,
+        ClientThread,
+        (LPVOID)&client_info,
+        0,
+        NULL
+    );
+}
+
+void CVCamStream::CleanupClient() {
+    freeaddrinfo(client_info.addressinfo);
+    closesocket(client_info.client_socket);
+    CloseHandle(client_thread);
+    WSACleanup();
+}
+
+DWORD WINAPI ClientThread(LPVOID lpParam) {
+    TCPClientInfo* client_info_handle;
+
+    int retval,
+        bytecount;
+
+    // Retrieve the socket handle
+    client_info_handle = (TCPClientInfo*)lpParam;
+    SOCKET client_socket_handle = client_info_handle->client_socket;
+
+    for(;;) {
+        if (client_socket_handle != INVALID_SOCKET) {
+            //TODO: add method to request image and set format etc.
+
+            // Receive until the peer closes the connection
+            bytecount = recv(client_socket_handle, (char*)frameBuffer, BUFFER_LENGTH, 0);
+            if (bytecount == SOCKET_ERROR) {
+                // Lost connection
+                fprintf(stderr, "recv failed with error: %d\n", WSAGetLastError());
+                closesocket(client_socket_handle);
+                client_socket_handle = INVALID_SOCKET;
+            }
+            else if (bytecount == 0) {
+                // shutdown the connection since no more data will be sent
+                retval = shutdown(client_socket_handle, SD_SEND);
+                if (retval == SOCKET_ERROR) {
+                    fprintf(stderr, "shutdown failed with error: %d\n", WSAGetLastError());
+                    closesocket(client_socket_handle);
+                    client_socket_handle = INVALID_SOCKET;
+                }
+                client_socket_handle = INVALID_SOCKET;
+            }
+
+        } else {
+            // Create a SOCKET for connecting to server
+            client_socket_handle = socket(client_info_handle->addressinfo->ai_family, client_info_handle->addressinfo->ai_socktype,
+                client_info_handle->addressinfo->ai_protocol);
+            if (client_socket_handle == INVALID_SOCKET) {
+                fprintf(stderr, "socket failed with error: %ld\n", WSAGetLastError());
+                closesocket(client_socket_handle);
+                client_socket_handle = INVALID_SOCKET;
+            }
+
+            // Connect to server.
+            retval = connect(client_socket_handle, client_info_handle->addressinfo->ai_addr, (int)client_info_handle->addressinfo->ai_addrlen);
+            if (retval == SOCKET_ERROR) {
+                closesocket(client_socket_handle);
+                client_socket_handle = INVALID_SOCKET;
+                continue;
+            }
+        }
+    }
+
+    // Close the connection socket if needed
+    if (client_socket_handle != INVALID_SOCKET) {
+        closesocket(client_socket_handle);
+        client_socket_handle = INVALID_SOCKET;
+    }
+
+    return 0;
+}
+
+#endif
 #pragma endregion
